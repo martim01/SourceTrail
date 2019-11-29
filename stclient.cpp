@@ -43,12 +43,9 @@ bool stClient::SendMessageToSourceTrail(const wxString& sMessage)
     {
         pSocket->SetFlags(wxSOCKET_BLOCK | wxSOCKET_WAITALL);
         Manager::Get()->GetLogManager()->Log(wxString::Format(wxT("SENT: '%s'"), sMessage.c_str()));
-        char* pBuffer  = new char[sMessage.length()];
-        strcpy(pBuffer, sMessage.ToAscii());
-        pSocket->Write(pBuffer, sMessage.length());
+        pSocket->Write(sMessage.ToUTF8(), sMessage.length());
         pSocket->Close();
         pSocket->Destroy();
-        delete[] pBuffer;
     }
 }
 
@@ -121,7 +118,7 @@ void stClient::MoveCursor(const wxString& sFile, unsigned long nLine, unsigned l
         cbEditor* pInbuilt = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
         pInbuilt->GotoLine(nLine, true);
         cbStyledTextCtrl* pControl = pInbuilt->GetControl();
-        nCol += pControl->PositionFromLine(nLine-1);
+        nCol += pControl->PositionFromLine(nLine-1)-1;
         pControl->SetCurrentPos(nCol);
         pControl->SetSelection(nCol, nCol);
         pControl->EnsureCaretVisible();
@@ -183,8 +180,8 @@ void stClient::OnSocketEvent(wxSocketEvent& event)
         case wxSOCKET_INPUT:
             Manager::Get()->GetLogManager()->Log(wxT("OnSocketEvent: Input"));
             pSock->Read(buf, sizeof(buf));
-            Manager::Get()->GetLogManager()->Log(wxString::Format(wxT("OnSocketEvent: Read %d: %s"), pSock->LastCount(), wxString::FromAscii(buf).c_str()));
-            HandleMessages(wxString::FromAscii(buf));
+            Manager::Get()->GetLogManager()->Log(wxString::Format(wxT("OnSocketEvent: Read %d: %s"), pSock->LastCount(), wxString::FromUTF8(buf).c_str()));
+            HandleMessages(wxString::FromUTF8(buf));
             break;
         // The server hangs up after sending the data
         case wxSOCKET_LOST:
@@ -216,7 +213,7 @@ void stClient::SendLocation()
 
         sFilename.Replace(wxT("\\"), wxT("/"));
 
-        sMessage.Printf(wxT("setActiveToken>>%s>>%d>>%d<EOM>"), sFilename.c_str(), nLine, pControl->GetColumn(nPosition));
+        sMessage.Printf(wxT("setActiveToken>>%s>>%d>>%d<EOM>"), sFilename.c_str(), nLine+1, pControl->GetColumn(nPosition)+1);
         SendMessageToSourceTrail(sMessage);
     }
 }
