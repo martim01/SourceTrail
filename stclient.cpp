@@ -46,7 +46,9 @@ bool stClient::SendMessageToSourceTrail(const wxString& sMessage)
         pSocket->Write(sMessage.ToUTF8(), sMessage.length());
         pSocket->Close();
         pSocket->Destroy();
+        return true;
     }
+    return false;
 }
 
 
